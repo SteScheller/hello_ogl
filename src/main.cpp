@@ -197,7 +197,6 @@ GLFWwindow* createWindow(
         win_w, win_h, title, nullptr, nullptr);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
-    gl3wInit();
 
     return window;
 }
