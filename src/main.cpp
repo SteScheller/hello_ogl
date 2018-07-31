@@ -250,7 +250,6 @@ void framebuffer_size_cb(
 {
     win_w = width;
     win_h = height;
-    std::cout << win_w << win_w;
 }
 
 void error_cb(int error, const char* description)
