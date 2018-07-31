@@ -4,6 +4,9 @@
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -15,6 +18,10 @@
 //-----------------------------------------------------------------------------
 unsigned int win_w = 1280;
 unsigned int win_h = 720;
+
+float fovY = 90.f;
+float zNear = 0.1f;
+float zFar = 30.f;
 
 #define REQUIRED_OGL_VERSION_MAJOR 3
 #define REQUIRED_OGL_VERSION_MINOR 3
@@ -43,7 +50,7 @@ int main(int, char**)
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0.f, 0.f, 0.f, 1.f);
 
     Shader shaderProg("src/shader/simple.vert", "src/shader/simple.frag");
@@ -93,14 +100,41 @@ int main(int, char**)
     // render loop
     // -----------
     bool show_demo_window = false;
+
+    glm::mat4 modelMX = glm::scale(
+        glm::mat4(1.f),
+        glm::vec3(1.f));
+
+    glm::mat4 viewMX = glm::lookAt(
+        glm::vec3(0.f, 0.f, 1.f),
+        glm::vec3(0.f),
+        glm::vec3(0.f, 1.f, 0.f));
+
+    glm::mat4 projMX = glm::perspective(
+        glm::radians(fovY),
+        static_cast<float>(win_w)/static_cast<float>(win_h),
+        0.1f,
+        50.0f);
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
+        process_input(window);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
         // draw the triangle
+        projMX = glm::perspective(
+            glm::radians(fovY),
+            static_cast<float>(win_w)/static_cast<float>(win_h),
+            zNear,
+            zFar);
         shaderProg.use();
+        shaderProg.setMat4("modelMX", modelMX);
+        shaderProg.setMat4("viewMX", viewMX);
+        shaderProg.setMat4("projMX", projMX);
+        shaderProg.setMat4("pvMX", projMX * viewMX);
+        shaderProg.setMat4("pvmMX", projMX * viewMX * modelMX);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
@@ -170,18 +204,18 @@ GLFWwindow* createWindow(
 
 void initializeGl3w()
 {
-	if (gl3wInit())
+    if (gl3wInit())
     {
         std::cerr << "Failed to initialize OpenGL" << std::endl;
-		glfwTerminate();
-		exit(EXIT_FAILURE);
+        glfwTerminate();
+        exit(EXIT_FAILURE);
     }
     if (!gl3wIsSupported(
             REQUIRED_OGL_VERSION_MAJOR, REQUIRED_OGL_VERSION_MINOR))
     {
         std::cerr << "OpenGL " << REQUIRED_OGL_VERSION_MAJOR << "." <<
             REQUIRED_OGL_VERSION_MINOR << " not supported" << std::endl;
-		exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     std::cout << "OpenGL " << glGetString(GL_VERSION) << ", GLSL " <<
         glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
@@ -216,6 +250,7 @@ void framebuffer_size_cb(
 {
     win_w = width;
     win_h = height;
+    std::cout << win_w << win_w;
 }
 
 void error_cb(int error, const char* description)
