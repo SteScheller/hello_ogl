@@ -196,6 +196,7 @@ GLFWwindow* createWindow(
     GLFWwindow* window = glfwCreateWindow(
         win_w, win_h, title, nullptr, nullptr);
     glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_cb);
     glfwSwapInterval(1);
 
     return window;
